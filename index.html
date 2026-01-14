@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ARIES – Inference Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    header {
+      padding: 14px;
+      background: #020617;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .panel {
+      background: #020617;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    video, canvas {
+      width: 100%;
+      background: black;
+      border-radius: 8px;
+    }
+
+    .controls {
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 8px;
+      margin: 4px 0;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+      background: #2563eb;
+    }
+
+    button.stop {
+      background: #b91c1c;
+    }
+
+    input[type="file"] {
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    .stats {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .alerts {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>🔥 ARIES – Advanced Real-Time Intelligence & Emergency System</header>
+
+<div class="container">
+
+  <!-- INPUT PANEL -->
+  <div class="panel">
+    <h3>Input Stream</h3>
+    <video id="video" autoplay muted></video>
+
+    <div class="controls">
+      <button onclick="startWebcam()">▶ Start Webcam</button>
+      <button class="stop" onclick="stopStream()">⛔ Stop</button>
+      <input type="file" accept="video/*" onchange="loadVideo(this)" />
+    </div>
+  </div>
+
+  <!-- OUTPUT PANEL -->
+  <div class="panel">
+    <h3>Inference Output</h3>
+    <canvas id="output"></canvas>
+
+    <div class="stats" id="stats">
+      HZRD Area: 0%<br />
+      Smoke Area: 0%
+    </div>
+
+    <div class="alerts" id="alerts">System normal</div>
+  </div>
+
+</div>
+
+<script>
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("output");
+  const ctx = canvas.getContext("2d");
+
+  const statsDiv = document.getElementById("stats");
+  const alertsDiv = document.getElementById("alerts");
+
+  let stream = null;
+  let running = false;
+  let lastPopupTime = 0;
+
+  // ------------------------
+  // Webcam
+  // ------------------------
+  async function startWebcam() {
+    stopStream();
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    await video.play();
+    startInferenceLoop();
+  }
+
+  function stopStream() {
+    running = false;
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    video.pause();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // ------------------------
+  // Video Upload
+  // ------------------------
+  function loadVideo(input) {
+    st

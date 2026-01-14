@@ -1,2 +1,11 @@
-# ARIES-Hazard-Detection-System
-This project is a full fledged network based application of camera based hazard detection.
+---
+title: ARIES BACKEND
+emoji: 📈
+colorFrom: red
+colorTo: yellow
+sdk: docker
+pinned: false
+short_description: Backend for the ARIES Hazard Detection Model
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
