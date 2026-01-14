@@ -33,6 +33,45 @@ We specialized the model to minimalize the risk of False Positives. Since all ty
 
 ARIES considers if the hazard is near an unprotected person? By fusing PPE Detection with Fire Proximity, it identifies when a person is in a "Red Zone" without a helmet or vest, providing a higher level of situational awareness.
 
+ARIES is intentionally deployed as a web-hosted system, not a closed local application.
+This design choice is critical to its role as an emergency intelligence layer, not just a detection model.
+
+From Isolated Cameras to a Connected Emergency Grid
+
+Traditional safety cameras are:
+
+isolated
+viewable only on-site
+
+By hosting ARIES as a web-accessible system, we transform existing camera infrastructure into a shared, intelligent emergency grid.
+
+Website hosting enables:
+
+Centralized situational awareness
+Multiple camera feeds (webcams, uploaded footage, remote devices) can be analyzed through a single backend.
+
+Device-agnostic access
+Any authorized responder can view analytics from:
+
+control rooms
+
+laptops
+
+tablets
+
+low-power edge terminals
+without installing specialized software.
+
+Real-time decision support
+Instead of raw video, responders receive:
+
+severity-aware alerts
+
+hazard area coverage
+
+human–hazard context
+directly in the browser.
+
 
 
 ## System Architecture & Design
