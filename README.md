@@ -38,10 +38,7 @@ This design choice is critical to its role as an emergency intelligence layer, n
 
 From Isolated Cameras to a Connected Emergency Grid
 
-Traditional safety cameras are:
-
-isolated
-viewable only on-site
+Traditional safety cameras are: isolated, viewable only on-site
 
 By hosting ARIES as a web-accessible system, we transform existing camera infrastructure into a shared, intelligent emergency grid.
 
@@ -53,22 +50,17 @@ Multiple camera feeds (webcams, uploaded footage, remote devices) can be analyze
 Device-agnostic access
 Any authorized responder can view analytics from:
 
-control rooms
-
-laptops
-
-tablets
-
+control rooms,
+laptops,
+tablets,
 low-power edge terminals
 without installing specialized software.
 
 Real-time decision support
 Instead of raw video, responders receive:
 
-severity-aware alerts
-
-hazard area coverage
-
+severity-aware alerts,
+hazard area coverage,
 human–hazard context
 directly in the browser.
 
