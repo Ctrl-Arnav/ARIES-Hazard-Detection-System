@@ -90,9 +90,7 @@ Logic: Conditional Inference Gating.
 
 --
 
-## Co-authors
-* https://github.com/kokomelone
-* https://github.com/VanshikaMahindru
+
 
 
 
