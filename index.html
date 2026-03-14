@@ -8,144 +8,286 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
+      overflow-x: hidden;
     }
 
     header {
-      padding: 14px;
+      padding: 15px;
       background: #020617;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
       text-align: center;
+      border-bottom: 2px solid #1e293b;
     }
 
     .container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      padding: 14px;
+      grid-template-columns: 300px 1fr 1fr;
+      gap: 15px;
+      padding: 15px;
+      height: calc(100vh - 70px);
     }
 
     .panel {
       background: #020617;
       border-radius: 10px;
-      padding: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #1e293b;
     }
 
-    video, canvas {
+    .log-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      background: #000;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border: 1px solid #334155;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .log-time { color: #94a3b8; }
+    .log-hzrd { color: #f87171; font-weight: bold; }
+    .log-smoke { color: #fbbf24; }
+
+    video, canvas, #previewImg {
       width: 100%;
       background: black;
       border-radius: 8px;
+      border: 1px solid #334155;
+      display: block;
     }
 
-    .controls {
-      margin-top: 10px;
+    #previewImg { display: none; } /* Hidden until an image is loaded */
+
+    #floatingAlert {
+      position: fixed;
+      right: 20px;
+      top: 90px;
+      width: 280px;
+      background: rgba(127, 29, 29, 0.95);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+      z-index: 1000;
+      border-left: 5px solid #ef4444;
+      animation: slideIn 0.3s ease-out;
     }
+
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
     button {
-      padding: 8px;
+      padding: 10px;
       margin: 4px 0;
       width: 100%;
       border-radius: 6px;
       border: none;
       cursor: pointer;
-      font-size: 14px;
-      color: white;
+      font-weight: 600;
       background: #2563eb;
+      color: white;
     }
 
-    button.stop {
-      background: #b91c1c;
-    }
-
-    input[type="file"] {
-      margin-top: 8px;
-      width: 100%;
-    }
-
-    .stats {
-      margin-top: 10px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .alerts {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    button.stop { background: #b91c1c; }
+    .file-input-label { font-size: 12px; margin-top: 10px; color: #94a3b8; }
   </style>
 </head>
 
 <body>
 
-<header>🔥 ARIES – Advanced Real-Time Intelligence & Emergency System</header>
+<header> ARIES – Advanced Real-Time Intelligence & Emergency System</header>
+
+<div id="floatingAlert">
+  <h4 id="alertTitle">🚨 CRITICAL HAZARD</h4>
+  <p id="alertBody">Immediate response required.</p>
+</div>
 
 <div class="container">
-
-  <!-- INPUT PANEL -->
+  
   <div class="panel">
-    <h3>Input Stream</h3>
-    <video id="video" autoplay muted></video>
-
-    <div class="controls">
-      <button onclick="startWebcam()">▶ Start Webcam</button>
-      <button class="stop" onclick="stopStream()">⛔ Stop</button>
-      <input type="file" accept="video/*" onchange="loadVideo(this)" />
+    <h3 style="margin-top:0">System Logs</h3>
+    <div id="logContainer" class="log-container">
+      <div class="log-entry">Waiting for stream...</div>
     </div>
+    <div id="status" style="margin-top:10px; font-size:13px; color:#94a3b8;">Status: Idle</div>
   </div>
 
-  <!-- OUTPUT PANEL -->
   <div class="panel">
-    <h3>Inference Output</h3>
+    <h3 style="margin-top:0">Input</h3>
+    <video id="video" playsinline muted></video>
+    <img id="previewImg" alt="Image Preview">
+    
+    <button onclick="startWebcam()">▶ Start Webcam</button>
+    <button class="stop" onclick="stopAll()">⛔ Stop System</button>
+    
+    <div class="file-input-label">Upload Video:</div>
+    <input type="file" accept="video/*" onchange="loadVideo(this)">
+    
+    <div class="file-input-label">Upload Image:</div>
+    <input type="file" accept="image/*" onchange="processImage(this)">
+  </div>
+
+  <div class="panel">
+    <h3 style="margin-top:0">AI Analysis</h3>
     <canvas id="output"></canvas>
-
-    <div class="stats" id="stats">
-      HZRD Area: 0%<br />
-      Smoke Area: 0%
-    </div>
-
-    <div class="alerts" id="alerts">System normal</div>
   </div>
 
 </div>
 
 <script>
   const video = document.getElementById("video");
-  const canvas = document.getElementById("output");
-  const ctx = canvas.getContext("2d");
+  const previewImg = document.getElementById("previewImg");
+  const output = document.getElementById("output");
+  const octx = output.getContext("2d");
+  const logContainer = document.getElementById("logContainer");
+  const floatingAlert = document.getElementById("floatingAlert");
 
-  const statsDiv = document.getElementById("stats");
-  const alertsDiv = document.getElementById("alerts");
+  const capture = document.createElement("canvas");
+  const cctx = capture.getContext("2d");
 
   let stream = null;
   let running = false;
-  let lastPopupTime = 0;
+  let videoURL = null;
 
-  // ------------------------
-  // Webcam
-  // ------------------------
+  function addLog(type, area) {
+    const timeStr = new Date().toLocaleTimeString();
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+    const classSpan = type === "HZRD" ? `<span class="log-hzrd">FIRE_DETECTED</span>` : `<span class="log-smoke">SMOKE_DETECTED</span>`;
+    entry.innerHTML = `<span class="log-time">[${timeStr}]</span> ${classSpan} - Area: ${area}%`;
+    logContainer.prepend(entry);
+    if (logContainer.children.length > 50) logContainer.removeChild(logContainer.lastChild);
+  }
+
   async function startWebcam() {
-    stopStream();
+    stopAll();
     stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.style.display = "block";
+    previewImg.style.display = "none";
     video.srcObject = stream;
     await video.play();
-    startInferenceLoop();
+    startInference();
   }
 
-  function stopStream() {
-    running = false;
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-    }
-    video.pause();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  // ------------------------
-  // Video Upload
-  // ------------------------
   function loadVideo(input) {
-    st
+    stopAll();
+    const file = input.files[0];
+    if (!file) return;
+    video.style.display = "block";
+    previewImg.style.display = "none";
+    videoURL = URL.createObjectURL(file);
+    video.src = videoURL;
+    video.loop = true;
+    video.oncanplay = async () => { await video.play(); startInference(); };
+  }
+
+  /* 🖼️ NEW: IMAGE INFERENCE FUNCTION */
+  async function processImage(input) {
+    stopAll();
+    const file = input.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      video.style.display = "none";
+      previewImg.style.display = "block";
+      previewImg.src = img.src;
+
+      output.width = capture.width = img.width;
+      output.height = capture.height = img.height;
+
+      cctx.drawImage(img, 0, 0, capture.width, capture.height);
+      const blob = await new Promise(r => capture.toBlob(r, "image/jpeg", 0.9));
+      
+      const form = new FormData();
+      form.append("file", blob);
+
+      const res = await fetch("/infer", { method: "POST", body: form });
+      const data = await res.json();
+      
+      // Clear canvas before drawing single image inference
+      octx.clearRect(0, 0, output.width, output.height);
+      octx.drawImage(img, 0, 0, output.width, output.height);
+      drawDetections(data);
+    };
+  }
+
+  function stopAll() {
+    running = false; 
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (videoURL) URL.revokeObjectURL(videoURL);
+    video.pause();
+    video.src = "";
+    video.srcObject = null;
+    
+
+    octx.clearRect(0, 0, output.width, output.height);
+    floatingAlert.style.display = "none";
+    document.getElementById("status").innerText = "Status: Stopped";
+  }
+
+  async function startInference() {
+    running = true;
+    capture.width = output.width = video.videoWidth;
+    capture.height = output.height = video.videoHeight;
+    document.getElementById("status").innerText = "Status: Active";
+
+    while (running) {
+      if (video.paused || video.ended) break;
+      cctx.drawImage(video, 0, 0, capture.width, capture.height);
+      const blob = await new Promise(r => capture.toBlob(r, "image/jpeg", 0.7));
+      const form = new FormData();
+      form.append("file", blob);
+
+      try {
+        const res = await fetch("/infer", { method: "POST", body: form });
+        const data = await res.json();
+        if (!running) break; // Final check before rendering
+        octx.drawImage(video, 0, 0, output.width, output.height);
+        drawDetections(data);
+      } catch (err) { console.error(err); }
+      await new Promise(r => setTimeout(r, 450));
+    }
+  }
+
+  function drawDetections(data) {
+    octx.lineWidth = 3;
+    data.detections.forEach(d => {
+      const [x1, y1, x2, y2] = d.bbox;
+      octx.strokeStyle = d.class === "HZRD" ? "#f87171" : d.class === "smoke" ? "#fbbf24" : "#4ade80";
+      octx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      octx.fillStyle = octx.strokeStyle;
+      octx.fillText(d.class, x1 + 5, y1 + 15);
+    });
+
+    if (data.area_coverage.HZRD > 0) {
+      addLog("HZRD", data.area_coverage.HZRD);
+      showAlert("🚨 HAZARDOUS ZONE", `Fire detected. Area: ${data.area_coverage.HZRD}%`, "#7f1d1d");
+    } else if (data.area_coverage.smoke > 0) {
+      addLog("smoke", data.area_coverage.smoke);
+      showAlert("⚠️ SMOKE DETECTED", `Smoke detected. Area: ${data.area_coverage.smoke}%`, "#92400e");
+    } else { floatingAlert.style.display = "none"; }
+  }
+
+  function showAlert(title, text, color) {
+    document.getElementById("alertTitle").innerText = title;
+    document.getElementById("alertBody").innerText = text;
+    floatingAlert.style.backgroundColor = color;
+    floatingAlert.style.display = "block";
+  }
+</script>
+</body>
+</html>
